@@ -3,9 +3,33 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>1v1屏幕共享示例</title>
+    <style type="text/css">
+        video {
+            width: 320px;
+            height: 240px;
+            border: 1px solid black;
+        }
+
+        button  {
+            background: #d84a38;
+            border: none;
+            color: white;
+            margin: 0 1rem 0 0;
+            padding: .5rem 1rem;
+            cursor: pointer;
+        }
+    </style>
 </head>
 <body>
-    hello world
+    <h3>1v1屏幕共享</h3>
+    <div>
+        <video id="localVideo" autoplay controls></video>
+        <video id="remoteVideo" autoplay controls></video>
+    </div>
+    <button id="btnStartPush">开始推流</button>
+    <button id="btnStartPush">停止推流</button>
+    <button id="btnStartPush">开始拉流</button>
+    <button id="btnStartPush">停止拉流</button>
 </body>
 </html>

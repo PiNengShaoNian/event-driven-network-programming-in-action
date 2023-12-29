@@ -1,3 +1,3 @@
 #!/bin/bash
 
-go build -o screen_share.out
+go build -o a.out
