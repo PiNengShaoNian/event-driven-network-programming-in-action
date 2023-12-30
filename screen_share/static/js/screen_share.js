@@ -1,6 +1,7 @@
 'use strict';
 
 const localVideo = document.getElementById('localVideo');
+const remoteVideo = document.getElementById('remoteVideo');
 const startPushBtn = document.getElementById('btnStartPush');
 const stopPushBtn = document.getElementById('btnStopPush');
 const startPullBtn = document.getElementById('btnStartPull');
@@ -21,9 +22,19 @@ const onIceStateChange = (pc, e) => {
   console.log(`${getPc(pc)} ice state change: ${pc.iceConnectionState}`);
 }
 
+const getOther = (pc) => {
+  return pc === pc1 ? pc2 : pc1;
+}
+
 const onIceCandidate = (pc, e) => {
   console.log(`${getPc(pc)}  get new ice candidate: ${e.candidate ?
     e.candidate.candidate : '(null)'}`);
+
+  getOther(pc).addIceCandidate(e.candidate).then(() => {
+    console.log(getPc(getOther()) + ' add ice candidate success');
+  }, (err) => {
+    console.log(getPc(getOther()) + ' add ice candidate error: ' + err.toString());
+  });
 }
 
 const onSetLocalSuccess = (pc) => {
@@ -57,6 +68,7 @@ const onCreateOfferSuccess = (desc) => {
 
   pc2.onaddstream = (e) => {
     console.log("pc2 receive stream, stream_id: " + e.stream.id);
+    remoteVideo.srcObject = e.stream;
   }
 
   pc2.setRemoteDescription(desc)
