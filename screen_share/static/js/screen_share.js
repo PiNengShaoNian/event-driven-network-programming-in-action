@@ -3,6 +3,7 @@
 const localVideo = document.getElementById('localVideo');
 const startPushBtn = document.getElementById('btnStartPush');
 const stopPushBtn = document.getElementById('btnStopPush');
+const startPullBtn = document.getElementById('btnStartPull');
 
 const config = {};
 const offerOptions = {
@@ -107,5 +108,25 @@ const stopPush = () => {
   localVideo.srcObject = null;
 }
 
-startPushBtn.addEventListener('click', startPush)
+const onCreateAnswerSuccess = (desc) => {
+  console.log(`answer from pc2: \n ${desc.sdp}`);
+
+  console.log("pc2 set local description start");
+  pc2.setLocalDescription(desc).then(() => {
+    onSetLocalSuccess(pc2);
+  }, onSetSessionDescriptionError);
+
+  pc1.setRemoteDescription(desc).then(() => {
+    onSetRemoteSuccess(pc1);
+  }, onSetSessionDescriptionError)
+}
+
+const startPull = () => {
+  console.log("start pull stream");
+
+  pc2.createAnswer().then(onCreateAnswerSuccess, onCreateSessionDescriptionError)
+}
+
+startPushBtn.addEventListener('click', startPush);
 stopPushBtn.addEventListener('click', stopPush);
+startPullBtn.addEventListener('click', startPull);
