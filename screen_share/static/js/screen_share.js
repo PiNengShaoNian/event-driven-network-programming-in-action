@@ -29,6 +29,10 @@ const onSetLocalSuccess = (pc) => {
   console.log(getPc(pc) + ' set local success');
 }
 
+const onSetRemoteSuccess = (pc) => {
+  console.log(getPc(pc) + ' set remote success');
+}
+
 const onSetSessionDescriptionError = (err) => {
   console.log('set session description error: ' + err.toString());
 }
@@ -40,10 +44,28 @@ const onCreateOfferSuccess = (desc) => {
   pc1.setLocalDescription(desc).then(() => {
     onSetLocalSuccess(pc1);
   }, onSetSessionDescriptionError);
+
+  // sdp交换
+  pc2.oniceconnectionstatechange = (e) => {
+    onIceStateChange(pc2, e);
+  }
+
+  pc2.onicecandidate = (e) => {
+    onIceCandidate(pc2, e);
+  }
+
+  pc2.onaddstream = (e) => {
+    console.log("pc2 receive stream, stream_id: " + e.stream.id);
+  }
+
+  pc2.setRemoteDescription(desc)
+    .then(() => {
+      onSetRemoteSuccess(pc2);
+    }, onSetSessionDescriptionError)
 }
 
-function onCreateSessionDescriptionError() {
-  console.log("create session description error: " + error.toString());
+function onCreateSessionDescriptionError(err) {
+  console.log("create session description error: " + err.toString());
 }
 
 const startPush = () => {
