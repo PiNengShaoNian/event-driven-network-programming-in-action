@@ -5,14 +5,16 @@ const remoteVideo = document.getElementById('remoteVideo');
 const startPushBtn = document.getElementById('btnStartPush');
 const stopPushBtn = document.getElementById('btnStopPush');
 const startPullBtn = document.getElementById('btnStartPull');
+const stopPullBtn = document.getElementById('btnStopPull');
 
 const config = {};
 const offerOptions = {
   offerToReceiveAudio: false,
   offerToReceiveVideo: false,
 };
-const pc1 = new RTCPeerConnection(config); // local pc
-const pc2 = new RTCPeerConnection(config); // remote pc
+let pc1 = new RTCPeerConnection(config); // local pc
+let pc2 = new RTCPeerConnection(config); // remote pc
+let remoteStream;
 
 const getPc = (pc) => {
   return pc === pc1 ? 'pc1' : 'pc2';
@@ -68,7 +70,7 @@ const onCreateOfferSuccess = (desc) => {
 
   pc2.onaddstream = (e) => {
     console.log("pc2 receive stream, stream_id: " + e.stream.id);
-    remoteVideo.srcObject = e.stream;
+    remoteStream = e.stream;
   }
 
   pc2.setRemoteDescription(desc)
@@ -136,9 +138,22 @@ const onCreateAnswerSuccess = (desc) => {
 const startPull = () => {
   console.log("start pull stream");
 
+  remoteVideo.srcObject = remoteStream;
   pc2.createAnswer().then(onCreateAnswerSuccess, onCreateSessionDescriptionError)
+}
+
+const stopPull = () => {
+  console.log("pc2 stop pull stream");
+
+  if (pc2) {
+    pc2.close();
+    pc2 = null;
+  }
+
+  remoteVideo.srcObject = null;
 }
 
 startPushBtn.addEventListener('click', startPush);
 stopPushBtn.addEventListener('click', stopPush);
 startPullBtn.addEventListener('click', startPull);
+stopPullBtn.addEventListener('click', stopPull);
