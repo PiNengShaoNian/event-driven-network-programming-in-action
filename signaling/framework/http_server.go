@@ -3,6 +3,7 @@ package framework
 import (
 	"fmt"
 	"net/http"
+	"strconv"
 )
 
 func init() {
@@ -26,6 +27,16 @@ func responseError(w http.ResponseWriter, r *http.Request, status int, err strin
 	w.Write([]byte(fmt.Sprintf("%d - %s", status, err)))
 }
 
+func getRealClientIP(r *http.Request) string {
+	ip := r.RemoteAddr
+	if rip := r.Header.Get("X-Real-IP"); rip != "" {
+		ip = rip
+	} else if rip = r.Header.Get("X-Forwarded-IP"); rip != "" {
+		ip = rip
+	}
+	return ip
+}
+
 func entry(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Path == "/favicon.ico" {
 		w.WriteHeader(http.StatusOK)
@@ -41,6 +52,15 @@ func entry(w http.ResponseWriter, r *http.Request) {
 				Logger: &ComLog{},
 				LogId:  GetLogId32(),
 			}
+
+			cr.Logger.AddNotice("logId", strconv.Itoa(int(cr.LogId)))
+			cr.Logger.AddNotice("url", r.URL.Path)
+			cr.Logger.AddNotice("refer", r.Header.Get("Referer"))
+			cr.Logger.AddNotice("Cookie", r.Header.Get("Cookie"))
+			cr.Logger.AddNotice("ua", r.Header.Get("User-Agent"))
+			cr.Logger.AddNotice("clientIP", r.RemoteAddr)
+			cr.Logger.AddNotice("realClientIP", getRealClientIP(r))
+
 			r.ParseForm()
 			action.Execute(w, cr)
 
