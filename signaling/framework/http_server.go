@@ -10,10 +10,16 @@ func init() {
 }
 
 type ActionInterface interface {
-	Execute(w http.ResponseWriter, r *http.Request)
+	Execute(w http.ResponseWriter, r *ComRequest)
 }
 
 var GActionRouter map[string]ActionInterface = make(map[string]ActionInterface)
+
+type ComRequest struct {
+	R      *http.Request
+	Logger *ComLog
+	LogId  uint32
+}
 
 func responseError(w http.ResponseWriter, r *http.Request, status int, err string) {
 	w.WriteHeader(status)
@@ -30,7 +36,15 @@ func entry(w http.ResponseWriter, r *http.Request) {
 
 	if action, ok := GActionRouter[r.URL.Path]; ok {
 		if action != nil {
-			action.Execute(w, r)
+			cr := &ComRequest{
+				R:      r,
+				Logger: &ComLog{},
+				LogId:  GetLogId32(),
+			}
+			r.ParseForm()
+			action.Execute(w, cr)
+
+			cr.Logger.Infof("")
 		} else {
 			responseError(w, r, http.StatusInternalServerError, "Internal server error")
 		}
