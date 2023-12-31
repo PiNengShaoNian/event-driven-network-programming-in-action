@@ -62,7 +62,14 @@ func entry(w http.ResponseWriter, r *http.Request) {
 			cr.Logger.AddNotice("realClientIP", getRealClientIP(r))
 
 			r.ParseForm()
+
+			for k, v := range r.Form {
+				cr.Logger.AddNotice(k, v[0])
+			}
+
+			cr.Logger.TimeBegin("totalCost")
 			action.Execute(w, cr)
+			cr.Logger.TimeEnd("totalCost")
 
 			cr.Logger.Infof("")
 		} else {
