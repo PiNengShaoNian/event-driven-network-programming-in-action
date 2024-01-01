@@ -3,6 +3,7 @@ package framework
 import (
 	"fmt"
 	"net/http"
+	"signaling/glog"
 	"strconv"
 )
 
@@ -81,6 +82,6 @@ func entry(w http.ResponseWriter, r *http.Request) {
 }
 
 func StartHttp() error {
-	fmt.Println("start http...")
-	return http.ListenAndServe(":8080", nil)
+	glog.Infof("start http server on port: %d", gconf.httpPort)
+	return http.ListenAndServe(fmt.Sprintf(":%d", gconf.httpPort), nil)
 }

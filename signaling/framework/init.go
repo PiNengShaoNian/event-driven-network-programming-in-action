@@ -14,9 +14,10 @@ func Init(confFile string) error {
 		return err
 	}
 	fmt.Printf("%+v", gconf)
-	glog.SetLogDir("./log")
-	glog.SetLogFileName("signaling")
-	glog.SetLogLevel("DEBUG")
-	glog.SetLogToStderr(true)
+
+	glog.SetLogDir(gconf.logDir)
+	glog.SetLogFileName(gconf.logFile)
+	glog.SetLogLevel(gconf.logLevel)
+	glog.SetLogToStderr(gconf.logToStderr)
 	return nil
 }
