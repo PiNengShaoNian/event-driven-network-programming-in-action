@@ -8,7 +8,7 @@ import (
 
 func main() {
 	flag.Parse()
-	framework.Init()
+	framework.Init("./conf/framework.conf")
 
 	glog.Info("hello world")
 
