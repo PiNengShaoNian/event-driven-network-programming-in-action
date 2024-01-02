@@ -1,6 +1,7 @@
 package action
 
 import (
+	"fmt"
 	"net/http"
 	"signaling/comerrors"
 	"signaling/framework"
@@ -11,10 +12,6 @@ type pushAction struct{}
 
 func NewPushAction() *pushAction {
 	return &pushAction{}
-}
-
-func writeJsonErrorResponse(err *comerrors.Errors, w http.ResponseWriter, cr *framework.ComRequest) {
-
 }
 
 func (*pushAction) Execute(w http.ResponseWriter, cr *framework.ComRequest) {
@@ -31,4 +28,38 @@ func (*pushAction) Execute(w http.ResponseWriter, cr *framework.ComRequest) {
 		writeJsonErrorResponse(cerr, w, cr)
 		return
 	}
+
+	var streamName string
+	if values, ok := r.Form["streamName"]; ok {
+		streamName = values[0]
+	}
+
+	if streamName == "" {
+		cerr := comerrors.New(comerrors.ParamErr, "streamName is null")
+		writeJsonErrorResponse(cerr, w, cr)
+		return
+	}
+
+	var strAudio, strVideo string
+	var audio, video int
+
+	if values, ok := r.Form["audio"]; ok {
+		strAudio = values[0]
+	}
+	if strAudio == "" || strAudio == "0" {
+		audio = 0
+	} else {
+		audio = 1
+	}
+
+	if values, ok := r.Form["video"]; ok {
+		strVideo = values[0]
+	}
+	if strVideo == "" || strVideo == "0" {
+		video = 0
+	} else {
+		video = 1
+	}
+
+	fmt.Println(uid, streamName, audio, video)
 }
