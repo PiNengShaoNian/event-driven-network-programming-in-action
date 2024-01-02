@@ -1,8 +1,9 @@
-package framework
+package action
 
 import (
 	"fmt"
 	"net/http"
+	"signaling/framework"
 	"text/template"
 )
 
@@ -17,8 +18,8 @@ func writeHttpErrorResponse(w http.ResponseWriter, status int, err string) {
 	w.Write([]byte(err))
 }
 
-func (*xrtcClientPushAction) Execute(w http.ResponseWriter, r *ComRequest) {
-	t, err := template.ParseFiles(fmt.Sprintf("%s/template/push.tpl", gconf.httpStaticDir))
+func (*xrtcClientPushAction) Execute(w http.ResponseWriter, r *framework.ComRequest) {
+	t, err := template.ParseFiles(fmt.Sprintf("%s/template/push.tpl", framework.GetHttpStaticDir()))
 
 	if err != nil {
 		fmt.Println(err)
