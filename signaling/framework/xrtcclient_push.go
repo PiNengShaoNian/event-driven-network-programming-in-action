@@ -18,7 +18,7 @@ func writeHttpErrorResponse(w http.ResponseWriter, status int, err string) {
 }
 
 func (*xrtcClientPushAction) Execute(w http.ResponseWriter, r *ComRequest) {
-	t, err := template.ParseFiles("./static/template/push.tpl")
+	t, err := template.ParseFiles(fmt.Sprintf("%s/template/push.tpl", gconf.httpStaticDir))
 
 	if err != nil {
 		fmt.Println(err)
