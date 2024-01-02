@@ -8,8 +8,13 @@ type FrameworkConf struct {
 	logLevel    string
 	logToStderr bool
 
-	httpPort      int
-	httpStaticDir string
+	httpPort         int
+	httpStaticDir    string
+	httpStaticPrefix string
+
+	httpsPort int
+	httpsCert string
+	httpsKey  string
 }
 
 var configFile *goconfig.ConfigFile
@@ -51,6 +56,26 @@ func loadConf(confFile string) (*FrameworkConf, error) {
 	}
 
 	conf.httpStaticDir, err = configFile.GetValue("http", "staticDir")
+	if err != nil {
+		return nil, err
+	}
+
+	conf.httpStaticPrefix, err = configFile.GetValue("http", "staticPrefix")
+	if err != nil {
+		return nil, err
+	}
+
+	conf.httpsPort, err = configFile.Int("https", "port")
+	if err != nil {
+		return nil, err
+	}
+
+	conf.httpsCert, err = configFile.GetValue("https", "cert")
+	if err != nil {
+		return nil, err
+	}
+
+	conf.httpsKey, err = configFile.GetValue("https", "key")
 	if err != nil {
 		return nil, err
 	}

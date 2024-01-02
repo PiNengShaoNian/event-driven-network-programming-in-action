@@ -81,7 +81,18 @@ func entry(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func RegisterStaticUrl() {
+	fs := http.FileServer(http.Dir(gconf.httpStaticDir))
+
+	http.Handle(gconf.httpStaticPrefix, http.StripPrefix(gconf.httpStaticPrefix, fs))
+}
+
 func StartHttp() error {
 	glog.Infof("start http server on port: %d", gconf.httpPort)
 	return http.ListenAndServe(fmt.Sprintf(":%d", gconf.httpPort), nil)
+}
+
+func StartHttps() error {
+	glog.Infof("start https server on port: %d", gconf.httpsPort)
+	return http.ListenAndServeTLS(fmt.Sprintf(":%d", gconf.httpsPort), gconf.httpsCert, gconf.httpsKey, nil)
 }
