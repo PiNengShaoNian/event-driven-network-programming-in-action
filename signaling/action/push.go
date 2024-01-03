@@ -1,7 +1,6 @@
 package action
 
 import (
-	"fmt"
 	"net/http"
 	"signaling/comerrors"
 	"signaling/framework"
@@ -12,6 +11,20 @@ type pushAction struct{}
 
 func NewPushAction() *pushAction {
 	return &pushAction{}
+}
+
+type xrtcPushReq struct {
+	Cmdno      int    `json:"cmdno"`
+	Uid        uint64 `json:"uid"`
+	StreamName string `json:"stream_name"`
+	Audio      int    `json:"audio"`
+	Video      int    `json:"video"`
+}
+
+type xrtcPushResp struct {
+	Errno  int    `json:"err_no"`
+	ErrMsg int    `json:"err_msg"`
+	Offer  string `json:"offer"`
 }
 
 func (*pushAction) Execute(w http.ResponseWriter, cr *framework.ComRequest) {
@@ -61,5 +74,19 @@ func (*pushAction) Execute(w http.ResponseWriter, cr *framework.ComRequest) {
 		video = 1
 	}
 
-	fmt.Println(uid, streamName, audio, video)
+	req := xrtcPushReq{
+		Cmdno:      CMDNO_PUSH,
+		Uid:        uid,
+		StreamName: streamName,
+		Audio:      audio,
+		Video:      video,
+	}
+
+	var resp xrtcPushResp
+	err = framework.Call("xrtc", req, resp, cr.LogId)
+
+	if err != nil {
+		cerr := comerrors.New(comerrors.NetworkErr, "backend process error")
+		writeJsonErrorResponse(cerr, w, cr)
+	}
 }

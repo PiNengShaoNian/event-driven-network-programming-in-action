@@ -9,6 +9,14 @@ import (
 	"strconv"
 )
 
+const (
+	CMDNO_PUSH      = 1
+	CMDNO_PULL      = 2
+	CMDNO_ANSWER    = 3
+	CMDNO_STOP_PUSH = 4
+	CMDNO_STOP_PULL = 5
+)
+
 type comHttpResp struct {
 	ErrNo  int         `json:"errNo"`
 	ErrMsg string      `json:"errMsg"`
