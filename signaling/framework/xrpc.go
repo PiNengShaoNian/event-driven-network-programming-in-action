@@ -79,6 +79,7 @@ func Call(serviceName string, request interface{}, response interface{}, logId u
 
 	resp, err := client.Do(req)
 
-	fmt.Println(resp)
-	return nil
+	fmt.Print(resp)
+
+	return err
 }
