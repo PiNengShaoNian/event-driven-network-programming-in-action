@@ -3,8 +3,22 @@ cmake_minimum_required(VERSION 3.10)
 project(xrtcserver)
 
 add_definitions("-g -pipe -W -Wall -fPIC -std=gnu++14 -DWEBRTC_POSIX
--DWEBRTC_LINUX")
+    -DWEBRTC_LINUX")
+    
+include_directories(
+    "./src"
+    "./third_party/include"
+)
 
-file(GLOB all_src "./src/*.cpp")
+link_directories(
+    "./third_party/lib"
+)
+
+file(GLOB all_src 
+      "./src/*.cpp"
+      "./src/base/*.cpp"
+)
 
 add_executable(xrtcserver ${all_src})
+
+target_link_libraries(xrtcserver libyaml-cpp.a)
