@@ -4,6 +4,7 @@
 #include <fstream>
 #include <mutex>
 #include <queue>
+#include <thread>
 
 #include "rtc_base/logging.h"
 
@@ -20,6 +21,9 @@ class XrtcLog : public rtc::LogSink {
 
   int init();
   void set_log_to_stderr(bool on);
+  bool start();
+  void stop();
+  void join();
 
  private:
   std::string _log_dir;
@@ -36,6 +40,9 @@ class XrtcLog : public rtc::LogSink {
 
   std::queue<std::string> _log_queue_wf;
   std::mutex _mtx_wf;
+
+  std::thread *_thread;
+  std::atomic<bool> _running{false};
 };
 }  // namespace xrtc
 
