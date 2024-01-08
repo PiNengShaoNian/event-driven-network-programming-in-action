@@ -49,6 +49,7 @@ int main() {
     return -1;
   }
 
+  g_log->set_log_to_stderr(g_conf->log_to_stderr);
   RTC_LOG(LS_VERBOSE) << "hello world";
 
   return 0;

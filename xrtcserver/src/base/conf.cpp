@@ -34,8 +34,6 @@ int load_general_conf(const char *filename, GeneralConf *conf) {
     return -1;
   }
 
-  std::cout << "config: " << conf->log_dir << std::endl;
-
   return 0;
 }
 }  // namespace xrtc

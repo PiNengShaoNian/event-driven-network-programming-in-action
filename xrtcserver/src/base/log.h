@@ -15,6 +15,7 @@ class XrtcLog : public rtc::LogSink {
   void OnLogMessage(const std::string &message) override;
 
   int init();
+  void set_log_to_stderr(bool on);
 
  private:
   std::string _log_dir;
