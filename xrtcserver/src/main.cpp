@@ -2,9 +2,11 @@
 
 #include "base/conf.h"
 #include "base/log.h"
+#include "server/signaling_server.h"
 
 xrtc::GeneralConf *g_conf = nullptr;
 xrtc::XrtcLog *g_log = nullptr;
+xrtc::SignalingServer *g_singling_server = nullptr;
 
 int init_general_conf(const char *filename) {
   if (!filename) {
@@ -38,6 +40,16 @@ int init_log(const std::string &log_dir, const std::string &log_name,
   return 0;
 }
 
+int init_singling_server() {
+  g_singling_server = new xrtc::SignalingServer();
+  int ret = g_singling_server->init("./conf/singling_server.yaml");
+  if (ret != 0) {
+    return -1;
+  }
+
+  return 0;
+}
+
 int main() {
   int ret = init_general_conf("./conf/general.yaml");
 
@@ -52,8 +64,12 @@ int main() {
   }
 
   g_log->set_log_to_stderr(g_conf->log_to_stderr);
-  RTC_LOG(LS_VERBOSE) << "hello world";
-  RTC_LOG(LS_WARNING) << "xxx hello world";
+
+  ret = init_singling_server();
+  // 初始化singling server
+  if (ret != 0) {
+    return -1;
+  }
 
   g_log->join();
 
