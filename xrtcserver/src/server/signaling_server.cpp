@@ -1,5 +1,6 @@
 #include "signaling_server.h"
 
+#include "base/socket.h"
 #include "rtc_base/logging.h"
 #include "yaml-cpp/yaml.h"
 
@@ -28,6 +29,9 @@ int SignalingServer::init(const char* conf_file) {
                         << ", error: " << e.msg;
     return -1;
   }
+
+  // 创建tcp server
+  _listen_fd = create_tcp_server(_options.host.c_str(), _options.port);
 
   return 0;
 }
