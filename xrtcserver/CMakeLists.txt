@@ -25,4 +25,4 @@ file(GLOB all_src
 add_executable(xrtcserver ${all_src})
 
 target_link_libraries(xrtcserver libyaml-cpp.a librtcbase.a -lpthread libabsl_strings_internal.a 
-    libabsl_string_view.a libabsl_strings.a libabsl_throw_delegate.a)
+    libabsl_string_view.a libabsl_strings.a libabsl_throw_delegate.a libev.a)
