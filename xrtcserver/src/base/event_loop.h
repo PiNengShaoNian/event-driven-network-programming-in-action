@@ -22,6 +22,7 @@ class EventLoop {
   void stop();
 
   IOWatcher *create_io_event(io_cb_t cb, void *data);
+  void start_io_event(IOWatcher *w, int fd, int mask);
 
  private:
   void *_owner;
