@@ -62,6 +62,30 @@ void EventLoop::start_io_event(IOWatcher *w, int fd, int mask) {
   }
 }
 
+void EventLoop::stop_io_event(IOWatcher *w, int fd, int mask) {
+  struct ev_io *io = &(w->io);
+  int active_events = TRANS_FROM_EV_MASK(io->events);
+  int events = active_events & ~mask;
+
+  if (events == active_events) {
+    return;
+  }
+
+  events = TRANS_TO_EV_MASK(events);
+  ev_io_stop(_loop, io);
+
+  if (events != EV_NONE) {
+    ev_io_set(io, fd, events);
+    ev_io_start(_loop, io);
+  }
+}
+
+void EventLoop::delete_io_event(IOWatcher *w) {
+  struct ev_io *io = &(w->io);
+  ev_io_stop(_loop, io);
+  delete w;
+}
+
 void EventLoop::start() { ev_run(_loop); }
 void EventLoop::stop() { ev_break(_loop, EVBREAK_ALL); }
 }  // namespace xrtc
