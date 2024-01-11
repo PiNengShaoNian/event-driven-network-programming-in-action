@@ -88,4 +88,58 @@ void EventLoop::delete_io_event(IOWatcher *w) {
 
 void EventLoop::start() { ev_run(_loop); }
 void EventLoop::stop() { ev_break(_loop, EVBREAK_ALL); }
+
+class TimerWatcher {
+ public:
+  TimerWatcher(EventLoop *el, time_cb_t cb, void *data, bool need_repeat)
+      : el(el), cb(cb), data(data), need_repeat(need_repeat) {
+    timer.data = this;
+  }
+
+ public:
+  EventLoop *el;
+  struct ev_timer timer;
+  time_cb_t cb;
+  void *data;
+  bool need_repeat;
+};
+
+static void generic_time_cb(struct ev_loop * /* loop */, struct ev_timer *timer,
+                            int /* events */) {
+  TimerWatcher *watcher = (TimerWatcher *)(timer->data);
+  // EventLoop *el, TimerWatcher *w, int fd, int events,
+  //                         void *data)
+  watcher->cb(watcher->el, watcher, watcher->data);
+}
+
+TimerWatcher *EventLoop::create_timer(time_cb_t cb, void *data,
+                                      bool need_repeat) {
+  TimerWatcher *watcher = new TimerWatcher(this, cb, data, need_repeat);
+  ev_init(&(watcher->timer), generic_time_cb);
+  return watcher;
+}
+
+void EventLoop::start_timer(TimerWatcher *w, unsigned int usec) {
+  struct ev_timer *timer = &(w->timer);
+  float sec = float(usec) / 1000000;
+
+  if (!w->need_repeat) {
+    ev_timer_set(timer, sec, 0);
+    ev_timer_start(_loop, timer);
+  } else {
+    timer->repeat = sec;
+    ev_timer_again(_loop, timer);
+  }
+}
+
+void EventLoop::stop_timer(TimerWatcher *w) {
+  struct ev_timer *timer = &(w->timer);
+  ev_timer_stop(_loop, timer);
+}
+
+void EventLoop::delete_timer(TimerWatcher *w) {
+  stop_timer(w);
+  delete w;
+}
+
 }  // namespace xrtc

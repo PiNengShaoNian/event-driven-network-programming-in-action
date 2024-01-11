@@ -5,9 +5,12 @@ struct ev_loop;
 namespace xrtc {
 class EventLoop;
 class IOWatcher;
+class TimerWatcher;
 
 typedef void (*io_cb_t)(EventLoop *el, IOWatcher *w, int fd, int events,
                         void *data);
+typedef void (*time_cb_t)(EventLoop *el, TimerWatcher *w, void *data);
+
 class EventLoop {
  public:
   enum {
@@ -25,6 +28,11 @@ class EventLoop {
   void start_io_event(IOWatcher *w, int fd, int mask);
   void stop_io_event(IOWatcher *w, int fd, int mask);
   void delete_io_event(IOWatcher *w);
+
+  TimerWatcher *create_timer(time_cb_t cb, void *data, bool need_repeat);
+  void start_timer(TimerWatcher *w, unsigned int usec);
+  void stop_timer(TimerWatcher *w);
+  void delete_timer(TimerWatcher *w);
 
  private:
   void *_owner;
