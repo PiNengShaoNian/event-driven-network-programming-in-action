@@ -11,7 +11,16 @@ void accept_new_conn(EventLoop *el, IOWatcher *w, int fd, int events,
                      void *data) {}
 
 void signaling_server_recv_notify(EventLoop *el, IOWatcher *w, int fd,
-                                  int events, void *data) {}
+                                  int events, void *data) {
+  int msg;
+  if (read(fd, &msg, sizeof(int)) != sizeof(int)) {
+    RTC_LOG(LS_WARNING) << "read from pipe error: " << strerror(errno)
+                        << ", errno: " << errno;
+  }
+
+  SignalingServer *server = (SignalingServer *)data;
+  server->_process_notify(msg);
+}
 
 SignalingServer::SignalingServer() : _el(new EventLoop(this)) {}
 
@@ -75,5 +84,44 @@ bool SignalingServer::start() {
   return true;
 }
 
-void SignalingServer::stop() {}
+int SignalingServer::stop() { return notify(SignalingServer::QUIT); }
+
+int SignalingServer::notify(int msg) {
+  int written = write(_notify_send_fd, &msg, sizeof(int));
+  return written == sizeof(int) ? 0 : -1;
+}
+
+void SignalingServer::_process_notify(int msg) {
+  switch (msg) {
+    case QUIT:
+      _stop();
+      break;
+    default:
+      RTC_LOG(LS_WARNING) << "unknown msg: " << msg;
+      break;
+  }
+}
+
+void SignalingServer::_stop() {
+  if (!_thread) {
+    RTC_LOG(LS_WARNING) << "signaling server not running";
+    return;
+  }
+
+  _el->delete_io_event(_pipe_watcher);
+  _el->delete_io_event(_io_watcher);
+  _el->stop();
+
+  close(_notify_recv_fd);
+  close(_notify_send_fd);
+  close(_listen_fd);
+
+  RTC_LOG(LS_INFO) << "signaling server stop";
+}
+
+void SignalingServer::join() {
+  if (_thread && _thread->joinable()) {
+    _thread->join();
+  }
+}
 }  // namespace xrtc

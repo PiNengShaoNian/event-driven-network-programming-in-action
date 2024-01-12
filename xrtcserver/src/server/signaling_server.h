@@ -16,11 +16,23 @@ struct SignalingServerOptions {
 
 class SignalingServer {
  public:
+  enum {
+    QUIT = 0,
+  };
   SignalingServer();
   ~SignalingServer();
   int init(const char *conf_file);
   bool start();
-  void stop();
+  int stop();
+  int notify(int msg);
+  void join();
+
+  friend void signaling_server_recv_notify(EventLoop *el, IOWatcher *w, int fd,
+                                           int events, void *data);
+
+ private:
+  void _process_notify(int msg);
+  void _stop();
 
  private:
   SignalingServerOptions _options;
