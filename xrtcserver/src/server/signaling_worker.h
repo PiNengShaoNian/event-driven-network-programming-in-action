@@ -8,12 +8,24 @@
 namespace xrtc {
 class SignalingWorker {
  public:
+  enum {
+    QUIT = 0,
+  };
   SignalingWorker(int worker_id);
   ~SignalingWorker();
 
   int init();
   bool start();
   void stop();
+  int notify(int msg);
+  void join();
+
+  friend void signaling_worker_recv_notify(EventLoop *el, IOWatcher *w, int fd,
+                                           int events, void *data);
+
+ private:
+  void _process_notify(int msg);
+  void _stop();
 
  private:
   int _worker_id;
