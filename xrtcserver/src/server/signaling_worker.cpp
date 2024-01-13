@@ -80,10 +80,21 @@ void SignalingWorker::_stop() {
   close(_notify_send_fd);
 }
 
+void SignalingWorker::_new_conn(int fd) {
+  RTC_LOG(LS_INFO) << "signaling worker " << _worker_id
+                   << ", receive fd: " << fd;
+}
+
 void SignalingWorker::_process_notify(int msg) {
   switch (msg) {
     case QUIT:
       _stop();
+      break;
+    case NEW_CONN:
+      int fd;
+      if (_q_conn.consume(&fd)) {
+        _new_conn(fd);
+      }
       break;
     default:
       RTC_LOG(LS_WARNING) << "unknown msg: " << msg;
@@ -97,5 +108,8 @@ void SignalingWorker::join() {
   }
 }
 
-int SignalingWorker::notify_new_conn(int /* fd */) { return 0; }
+int SignalingWorker::notify_new_conn(int fd) {
+  _q_conn.produce(fd);
+  return notify(SignalingWorker::NEW_CONN);
+}
 }  // namespace xrtc
