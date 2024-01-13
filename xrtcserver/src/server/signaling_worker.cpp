@@ -6,8 +6,8 @@
 #include "rtc_base/logging.h"
 
 namespace xrtc {
-void signaling_worker_recv_notify(EventLoop *el, IOWatcher *w, int fd,
-                                  int events, void *data) {
+void signaling_worker_recv_notify(EventLoop * /* el */, IOWatcher * /* w */,
+                                  int fd, int /* events */, void *data) {
   int msg;
   if (read(fd, &msg, sizeof(int)) != sizeof(int)) {
     RTC_LOG(LS_WARNING) << "read from pipe error: " << strerror(errno)
@@ -96,4 +96,6 @@ void SignalingWorker::join() {
     _thread->join();
   }
 }
+
+int SignalingWorker::notify_new_conn(int /* fd */) { return 0; }
 }  // namespace xrtc

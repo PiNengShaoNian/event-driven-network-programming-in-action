@@ -10,6 +10,7 @@ class SignalingWorker {
  public:
   enum {
     QUIT = 0,
+    NEW_CONN = 1,
   };
   SignalingWorker(int worker_id);
   ~SignalingWorker();
@@ -19,6 +20,7 @@ class SignalingWorker {
   void stop();
   int notify(int msg);
   void join();
+  int notify_new_conn(int fd);
 
   friend void signaling_worker_recv_notify(EventLoop *el, IOWatcher *w, int fd,
                                            int events, void *data);

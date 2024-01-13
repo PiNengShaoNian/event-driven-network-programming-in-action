@@ -8,11 +8,26 @@
 #include "yaml-cpp/yaml.h"
 
 namespace xrtc {
-void accept_new_conn(EventLoop *el, IOWatcher *w, int fd, int events,
-                     void *data) {}
+void accept_new_conn(EventLoop * /* el */, IOWatcher * /* w */, int fd,
+                     int /* events */, void *data) {
+  int cfd;
+  char cip[128];
+  int cport;
 
-void signaling_server_recv_notify(EventLoop *el, IOWatcher *w, int fd,
-                                  int events, void *data) {
+  cfd = tcp_accept(fd, cip, &cport);
+  if (cfd == -1) {
+    return;
+  }
+
+  RTC_LOG(LS_INFO) << "accept new conn, fd: " << fd << ", ip: " << cip
+                   << ", port: " << cport;
+
+  SignalingServer *server = (SignalingServer *)data;
+  server->_dispatch_new_conn(cfd);
+}
+
+void signaling_server_recv_notify(EventLoop * /* el */, IOWatcher * /* w */,
+                                  int fd, int /* events */, void *data) {
   int msg;
   if (read(fd, &msg, sizeof(int)) != sizeof(int)) {
     RTC_LOG(LS_WARNING) << "read from pipe error: " << strerror(errno)
@@ -25,7 +40,25 @@ void signaling_server_recv_notify(EventLoop *el, IOWatcher *w, int fd,
 
 SignalingServer::SignalingServer() : _el(new EventLoop(this)) {}
 
-SignalingServer::~SignalingServer() {}
+SignalingServer::~SignalingServer() {
+  if (_el) {
+    delete _el;
+    _el = nullptr;
+  }
+
+  if (_thread) {
+    delete _thread;
+    _thread = nullptr;
+  }
+
+  for (auto worker : _workers) {
+    if (worker) {
+      delete worker;
+    }
+  }
+
+  _workers.clear();
+}
 
 int SignalingServer::init(const char *conf_file) {
   if (!conf_file) {
@@ -92,7 +125,20 @@ int SignalingServer::_create_worker(int worker_id) {
     return -1;
   }
 
+  _workers.push_back(worker);
+
   return 0;
+}
+
+void SignalingServer::_dispatch_new_conn(int fd) {
+  int index = _next_worker_index;
+  _next_worker_index++;
+  if (_next_worker_index >= _workers.size()) {
+    _next_worker_index = 0;
+  }
+
+  SignalingWorker *worker = _workers[index];
+  worker->notify_new_conn(fd);
 }
 
 bool SignalingServer::start() {
@@ -143,6 +189,13 @@ void SignalingServer::_stop() {
   close(_listen_fd);
 
   RTC_LOG(LS_INFO) << "signaling server stop";
+
+  for (auto worker : _workers) {
+    if (worker) {
+      worker->stop();
+      worker->join();
+    }
+  }
 }
 
 void SignalingServer::join() {

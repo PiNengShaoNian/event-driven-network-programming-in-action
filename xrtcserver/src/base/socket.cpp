@@ -57,4 +57,45 @@ int create_tcp_server(const char *addr, int port) {
 
   return sock;
 }
+
+int generic_accept(int sock, struct sockaddr *sa, socklen_t *len) {
+  int fd = -1;
+
+  while (1) {
+    fd = accept(sock, sa, len);
+    if (fd == -1) {
+      if (EINTR == errno) {
+        continue;
+      } else {
+        RTC_LOG(LS_WARNING)
+            << "tcp accept error: " << strerror(errno) << ", errno: " << errno;
+        return -1;
+      }
+    }
+
+    break;
+  }
+
+  return fd;
+}
+
+int tcp_accept(int sock, char *host, int *port) {
+  struct sockaddr_in sa;
+  socklen_t salen = sizeof(sa);
+  int fd = generic_accept(sock, (struct sockaddr *)&sa, &salen);
+  if (fd == -1) {
+    return -1;
+  }
+
+  if (host) {
+    strcpy(host, inet_ntoa(sa.sin_addr));
+  }
+
+  if (port) {
+    *port = ntohs(sa.sin_port);
+  }
+
+  return fd;
+}
+
 }  // namespace xrtc
