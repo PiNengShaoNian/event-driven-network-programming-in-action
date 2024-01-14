@@ -1,6 +1,8 @@
 #ifndef __TCP_CONNECTION_H_
 #define __TCP_CONNECTION_H_
 
+#include "base/event_loop.h"
+
 namespace xrtc {
 class TcpConnection {
  public:
@@ -11,6 +13,7 @@ class TcpConnection {
   int fd;
   char ip[64];
   int port;
+  IOWatcher *io_watcher = nullptr;
 };
 }  // namespace xrtc
 

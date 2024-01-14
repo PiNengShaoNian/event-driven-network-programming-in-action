@@ -2,11 +2,14 @@
 #define __SIGNALING_WORKER_H_
 
 #include <thread>
+#include <vector>
 
 #include "base/event_loop.h"
 #include "base/lock_free_queue.h"
 
 namespace xrtc {
+class TcpConnection;
+
 class SignalingWorker {
  public:
   enum {
@@ -25,11 +28,14 @@ class SignalingWorker {
 
   friend void signaling_worker_recv_notify(EventLoop *el, IOWatcher *w, int fd,
                                            int events, void *data);
+  friend void conn_io_cb(EventLoop *el, IOWatcher *w, int fd, int events,
+                         void *data);
 
  private:
   void _process_notify(int msg);
   void _stop();
   void _new_conn(int fd);
+  void _read_query(int fd);
 
  private:
   int _worker_id;
@@ -39,6 +45,7 @@ class SignalingWorker {
   int _notify_send_fd = -1;
   std::thread *_thread = nullptr;
   LockFreeQueue<int> _q_conn;
+  std::vector<TcpConnection *> _conns;
 };
 }  // namespace xrtc
 
