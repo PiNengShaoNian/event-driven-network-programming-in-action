@@ -3,7 +3,9 @@
 #include <errno.h>
 #include <unistd.h>
 
+#include "base/socket.h"
 #include "rtc_base/logging.h"
+#include "tcp_connection.h"
 
 namespace xrtc {
 void signaling_worker_recv_notify(EventLoop * /* el */, IOWatcher * /* w */,
@@ -83,6 +85,17 @@ void SignalingWorker::_stop() {
 void SignalingWorker::_new_conn(int fd) {
   RTC_LOG(LS_INFO) << "signaling worker " << _worker_id
                    << ", receive fd: " << fd;
+
+  if (fd < 0) {
+    RTC_LOG(LS_WARNING) << "invalid fd: " << fd;
+    return;
+  }
+
+  sock_setnonblock(fd);
+  sock_setnodelay(fd);
+
+  TcpConnection *c = new TcpConnection(fd);
+  sock_peer_to_str(fd, c->ip, &(c->port));
 }
 
 void SignalingWorker::_process_notify(int msg) {
