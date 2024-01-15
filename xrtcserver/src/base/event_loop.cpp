@@ -16,6 +16,10 @@ EventLoop::EventLoop(void *owner)
 
 EventLoop::~EventLoop() {}
 
+unsigned long EventLoop::now() {
+  return static_cast<unsigned long>(ev_now(_loop)) * 1000000;
+}
+
 class IOWatcher {
  public:
   EventLoop *el;
@@ -124,6 +128,7 @@ void EventLoop::start_timer(TimerWatcher *w, unsigned int usec) {
   float sec = float(usec) / 1000000;
 
   if (!w->need_repeat) {
+    ev_timer_stop(_loop, timer);
     ev_timer_set(timer, sec, 0);
     ev_timer_start(_loop, timer);
   } else {
