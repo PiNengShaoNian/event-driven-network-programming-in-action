@@ -299,10 +299,25 @@ int SignalingWorker::_process_push(int cmdno, TcpConnection *c,
     audio = root["audio"].asInt();
     video = root["video"].asInt();
   } catch (Json::Exception e) {
-    RTC_LOG(LS_WARNING) << "parse json body error: " << e.what();
+    RTC_LOG(LS_WARNING) << "parse json body error: " << e.what()
+                        << "log_id: " << log_id;
     return -1;
   }
 
+  RTC_LOG(LS_INFO) << "cmdno[" << cmdno << "]"
+                   << ", stream_name[" << stream_name << "]"
+                   << ", audio[" << audio << "]"
+                   << ", video[" << video << "]"
+                   << " signaling server push request";
+
+  std::shared_ptr<RtcMsg> msg = std::make_shared<RtcMsg>();
+  msg->cmdno = cmdno;
+  msg->uid = uid;
+  msg->stream_name = stream_name;
+  msg->audio = audio;
+  msg->video = video;
+
+  // return g_rtc_server->send_rtc_msg(msg);
   return 0;
 }
 

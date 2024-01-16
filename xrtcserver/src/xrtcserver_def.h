@@ -7,4 +7,18 @@
 #define CMDNO_STOPUSH 4
 #define CMDNO_STOPPULL 5
 
+#include <stdint.h>
+
+#include <string>
+
+namespace xrtc {
+struct RtcMsg {
+  int cmdno = -1;
+  uint64_t uid = 0;
+  std::string stream_name;
+  int audio = 0;
+  int video = 0;
+};
+}  // namespace xrtc
+
 #endif  // __XRTCSERVER_DEF_H_
