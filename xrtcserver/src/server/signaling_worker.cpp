@@ -25,7 +25,24 @@ SignalingWorker::SignalingWorker(int worker_id,
                                  const SignalingServerOptions &options)
     : _worker_id(worker_id), _el(new EventLoop(this)), _options(options) {}
 
-SignalingWorker::~SignalingWorker() {}
+SignalingWorker::~SignalingWorker() {
+  for (auto c : _conns) {
+    if (c) {
+      _close_conn(c);
+    }
+  }
+
+  _conns.clear();
+
+  if (_el) {
+    delete _el;
+  }
+
+  if (_thread) {
+    delete _thread;
+    _thread = nullptr;
+  }
+}
 
 int SignalingWorker::init() {
   int fds[2];
