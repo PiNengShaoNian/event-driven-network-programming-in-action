@@ -5,8 +5,11 @@
 
 #include "base/socket.h"
 #include "rtc_base/logging.h"
+#include "rtc_server.h"
 #include "tcp_connection.h"
 #include "xrtcserver_def.h"
+
+extern xrtc::RtcServer *g_rtc_server;
 
 namespace xrtc {
 void signaling_worker_recv_notify(EventLoop * /* el */, IOWatcher * /* w */,
@@ -286,7 +289,7 @@ int SignalingWorker::_process_request(TcpConnection *c,
   return 0;
 }
 
-int SignalingWorker::_process_push(int cmdno, TcpConnection *c,
+int SignalingWorker::_process_push(int cmdno, TcpConnection * /* c */,
                                    const Json::Value &root, uint32_t log_id) {
   uint64_t uid;
   std::string stream_name;
@@ -317,8 +320,7 @@ int SignalingWorker::_process_push(int cmdno, TcpConnection *c,
   msg->audio = audio;
   msg->video = video;
 
-  // return g_rtc_server->send_rtc_msg(msg);
-  return 0;
+  return g_rtc_server->send_rtc_msg(msg);
 }
 
 int SignalingWorker::notify_new_conn(int fd) {

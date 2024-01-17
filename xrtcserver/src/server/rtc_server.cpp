@@ -82,11 +82,42 @@ void RtcServer::join() {
   }
 }
 
+void RtcServer::push_msg(std::shared_ptr<RtcMsg> msg) {
+  std::unique_lock<std::mutex> lock(_q_msg_mtx);
+  _q_msg.push(msg);
+}
+
+std::shared_ptr<RtcMsg> RtcServer::pop_msg() {
+  std::unique_lock<std::mutex> lock(_q_msg_mtx);
+  if (_q_msg.empty()) {
+    return nullptr;
+  }
+
+  std::shared_ptr<RtcMsg> msg = _q_msg.front();
+  _q_msg.pop();
+  return msg;
+}
+
+int RtcServer::send_rtc_msg(std::shared_ptr<RtcMsg> msg) {
+  push_msg(msg);
+  return notify(RTC_MSG);
+}
+
 void RtcServer::_stop() {
   _el->delete_io_event(_pipe_watcher);
   _el->stop();
   close(_notify_recv_fd);
   close(_notify_send_fd);
+}
+
+void RtcServer::_process_rtc_msg() {
+  std::shared_ptr<RtcMsg> msg = pop_msg();
+  if (!msg) {
+    return;
+  }
+
+  RTC_LOG(LS_WARNING) << "=============cmdno: " << msg->cmdno
+                      << ", uid: " << msg->uid;
 }
 
 void RtcServer::_process_notify(int msg) {
@@ -95,6 +126,7 @@ void RtcServer::_process_notify(int msg) {
       _stop();
       break;
     case RTC_MSG:
+      _process_rtc_msg();
       break;
     default:
       RTC_LOG(LS_WARNING) << "unknown msg: " << msg;
