@@ -4,11 +4,13 @@
 
 #include "base/conf.h"
 #include "base/log.h"
+#include "server/rtc_server.h"
 #include "server/signaling_server.h"
 
 xrtc::GeneralConf *g_conf = nullptr;
 xrtc::XrtcLog *g_log = nullptr;
 xrtc::SignalingServer *g_signaling_server = nullptr;
+xrtc::RtcServer *g_rtc_server = nullptr;
 
 static void process_signal(int sig) {
   RTC_LOG(LS_INFO) << "receive signal: " << sig;
@@ -61,6 +63,16 @@ int init_singling_server() {
   return 0;
 }
 
+int init_rtc_server() {
+  g_rtc_server = new xrtc::RtcServer();
+  int ret = g_rtc_server->init("./conf/rtc_server.yaml");
+  if (ret != 0) {
+    return -1;
+  }
+
+  return 0;
+}
+
 int main() {
   int ret = init_general_conf("./conf/general.yaml");
 
@@ -78,6 +90,12 @@ int main() {
 
   ret = init_singling_server();
   // 初始化singling server
+  if (ret != 0) {
+    return -1;
+  }
+
+  ret = init_rtc_server();
+  // 初始化rtc server
   if (ret != 0) {
     return -1;
   }
