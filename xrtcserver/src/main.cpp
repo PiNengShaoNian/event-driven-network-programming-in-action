@@ -18,6 +18,9 @@ static void process_signal(int sig) {
     if (g_signaling_server) {
       g_signaling_server->stop();
     }
+    if (g_rtc_server) {
+      g_rtc_server->stop();
+    }
   }
 }
 
@@ -104,7 +107,10 @@ int main() {
   signal(SIGTERM, process_signal);
 
   g_signaling_server->start();
+  g_rtc_server->start();
+
   g_signaling_server->join();
+  g_rtc_server->join();
 
   return 0;
 }

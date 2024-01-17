@@ -7,7 +7,17 @@
 
 namespace xrtc {
 void rtc_server_recv_notify(EventLoop * /* el */, IOWatcher * /* w */, int fd,
-                            int events, void *data) {}
+                            int events, void *data) {
+  int msg;
+  if (read(fd, &msg, sizeof(int)) != sizeof(int)) {
+    RTC_LOG(LS_WARNING) << "read from pipe error: " << strerror(errno)
+                        << ", errno: " << errno;
+    return;
+  }
+
+  RtcServer *server = (RtcServer *)data;
+  server->_process_notify(msg);
+}
 
 RtcServer::RtcServer() : _el(new EventLoop(this)) {}
 
@@ -42,6 +52,54 @@ int RtcServer::init(const char *conf_file) {
   _el->start_io_event(_pipe_watcher, _notify_recv_fd, EventLoop::READ);
 
   return 0;
+}
+
+bool RtcServer::start() {
+  if (_thread) {
+    RTC_LOG(LS_WARNING) << "rtc server already start";
+    return false;
+  }
+
+  _thread = new std::thread([=]() {
+    RTC_LOG(LS_INFO) << "rtc server event loop start";
+    _el->start();
+    RTC_LOG(LS_INFO) << "rtc server event loop stop";
+  });
+
+  return true;
+}
+
+void RtcServer::stop() { notify(QUIT); }
+
+int RtcServer::notify(int msg) {
+  int written = write(_notify_send_fd, &msg, sizeof(int));
+  return written == sizeof(int) ? 0 : -1;
+}
+
+void RtcServer::join() {
+  if (_thread && _thread->joinable()) {
+    _thread->join();
+  }
+}
+
+void RtcServer::_stop() {
+  _el->delete_io_event(_pipe_watcher);
+  _el->stop();
+  close(_notify_recv_fd);
+  close(_notify_send_fd);
+}
+
+void RtcServer::_process_notify(int msg) {
+  switch (msg) {
+    case QUIT:
+      _stop();
+      break;
+    case RTC_MSG:
+      break;
+    default:
+      RTC_LOG(LS_WARNING) << "unknown msg: " << msg;
+      break;
+  }
 }
 
 }  // namespace xrtc
