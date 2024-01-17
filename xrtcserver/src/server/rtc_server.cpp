@@ -3,6 +3,7 @@
 #include <unistd.h>
 
 #include "rtc_base/logging.h"
+#include "rtc_worker.h"
 #include "yaml-cpp/yaml.h"
 
 namespace xrtc {
@@ -50,6 +51,29 @@ int RtcServer::init(const char *conf_file) {
 
   _pipe_watcher = _el->create_io_event(rtc_server_recv_notify, this);
   _el->start_io_event(_pipe_watcher, _notify_recv_fd, EventLoop::READ);
+
+  for (int i = 0; i < _options.worker_num; i++) {
+    if (_create_worker(i) != 0) {
+      return -1;
+    }
+  }
+
+  return 0;
+}
+
+int RtcServer::_create_worker(int worker_id) {
+  RTC_LOG(LS_INFO) << "rtc server create worker, worker_id: " << worker_id;
+  RtcWorker *worker = new RtcWorker(worker_id, _options);
+
+  if (worker->init() != 0) {
+    return -1;
+  }
+
+  if (!worker->start()) {
+    return -1;
+  }
+
+  _workers.push_back(worker);
 
   return 0;
 }

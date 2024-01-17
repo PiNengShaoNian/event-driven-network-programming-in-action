@@ -12,6 +12,7 @@ namespace xrtc {
 struct RtcServerOptions {
   int worker_num;
 };
+class RtcWorker;
 
 class RtcServer {
   enum {
@@ -39,6 +40,7 @@ class RtcServer {
   void _process_notify(int msg);
   void _process_rtc_msg();
   void _stop();
+  int _create_worker(int worker_id);
 
  private:
   EventLoop *_el;
@@ -52,6 +54,8 @@ class RtcServer {
 
   std::queue<std::shared_ptr<RtcMsg>> _q_msg;
   std::mutex _q_msg_mtx;
+
+  std::vector<RtcWorker *> _workers;
 };
 }  // namespace xrtc
 
