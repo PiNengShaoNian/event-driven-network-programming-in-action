@@ -3,6 +3,7 @@
 #include <unistd.h>
 
 #include "rtc_base/logging.h"
+#include "signaling_worker.h"
 
 namespace xrtc {
 
@@ -86,7 +87,14 @@ void RtcWorker::_stop() {
 }
 
 void RtcWorker::_process_push(std::shared_ptr<RtcMsg> msg) {
-  
+  std::string offer = "offer";
+
+  msg->sdp = offer;
+
+  SignalingWorker *worker = (SignalingWorker *)(msg->worker);
+  if (worker) {
+    worker->send_rtc_msg(msg);
+  }
 }
 
 void RtcWorker::_process_rtc_msg() {

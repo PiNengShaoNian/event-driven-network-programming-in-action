@@ -3,6 +3,8 @@
 
 #include <rtc_base/slice.h>
 
+#include <mutex>
+#include <queue>
 #include <thread>
 #include <vector>
 
@@ -10,6 +12,7 @@
 #include "base/lock_free_queue.h"
 #include "json/json.h"
 #include "signaling_server.h"
+#include "xrtcserver_def.h"
 
 namespace xrtc {
 class TcpConnection;
@@ -19,6 +22,7 @@ class SignalingWorker {
   enum {
     QUIT = 0,
     NEW_CONN = 1,
+    RTC_MSG = 2,
   };
   SignalingWorker(int worker_id, const SignalingServerOptions &options);
   ~SignalingWorker();
@@ -29,6 +33,9 @@ class SignalingWorker {
   int notify(int msg);
   void join();
   int notify_new_conn(int fd);
+  int send_rtc_msg(std::shared_ptr<RtcMsg> msg);
+  void push_msg(std::shared_ptr<RtcMsg> msg);
+  std::shared_ptr<RtcMsg> pop_msg();
 
   friend void signaling_worker_recv_notify(EventLoop *el, IOWatcher *w, int fd,
                                            int events, void *data);
@@ -49,6 +56,8 @@ class SignalingWorker {
   void _process_timeout(TcpConnection *c);
   int _process_push(int cmdno, TcpConnection *c, const Json::Value &root,
                     uint32_t log_id);
+  void _process_rtc_msg();
+  void _response_server_offer(std::shared_ptr<RtcMsg> msg);
 
  private:
   int _worker_id;
@@ -60,6 +69,9 @@ class SignalingWorker {
   std::thread *_thread = nullptr;
   LockFreeQueue<int> _q_conn;
   std::vector<TcpConnection *> _conns;
+
+  std::queue<std::shared_ptr<RtcMsg>> _q_msg;
+  std::mutex _q_msg_mtx;
 };
 }  // namespace xrtc
 
