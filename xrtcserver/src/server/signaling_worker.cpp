@@ -297,7 +297,7 @@ int SignalingWorker::_process_push(int cmdno, TcpConnection * /* c */,
   int video;
 
   try {
-    uid = root["cmdno"].asUInt64();
+    uid = root["uid"].asUInt64();
     stream_name = root["stream_name"].asString();
     audio = root["audio"].asInt();
     video = root["video"].asInt();
@@ -308,6 +308,7 @@ int SignalingWorker::_process_push(int cmdno, TcpConnection * /* c */,
   }
 
   RTC_LOG(LS_INFO) << "cmdno[" << cmdno << "]"
+                   << ", uid[" << uid << "]"
                    << ", stream_name[" << stream_name << "]"
                    << ", audio[" << audio << "]"
                    << ", video[" << video << "]"
@@ -319,6 +320,7 @@ int SignalingWorker::_process_push(int cmdno, TcpConnection * /* c */,
   msg->stream_name = stream_name;
   msg->audio = audio;
   msg->video = video;
+  msg->log_id = log_id;
 
   return g_rtc_server->send_rtc_msg(msg);
 }

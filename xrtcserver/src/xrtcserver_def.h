@@ -18,6 +18,7 @@ struct RtcMsg {
   std::string stream_name;
   int audio = 0;
   int video = 0;
+  uint32_t log_id = 0;
 };
 }  // namespace xrtc
 

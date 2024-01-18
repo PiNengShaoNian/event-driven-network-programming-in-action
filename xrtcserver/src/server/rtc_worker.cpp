@@ -7,7 +7,7 @@
 namespace xrtc {
 
 void rtc_worker_recv_notify(EventLoop * /* el */, IOWatcher * /* w */, int fd,
-                            int events, void *data) {
+                            int /* events */, void *data) {
   int msg;
   if (read(fd, &msg, sizeof(int)) != sizeof(int)) {
     RTC_LOG(LS_WARNING) << "read from pipe error: " << strerror(errno)
@@ -85,12 +85,39 @@ void RtcWorker::_stop() {
   close(_notify_send_fd);
 }
 
+void RtcWorker::_process_push(std::shared_ptr<RtcMsg> msg) {
+  
+}
+
+void RtcWorker::_process_rtc_msg() {
+  std::shared_ptr<RtcMsg> msg;
+  if (!pop_msg(&msg)) {
+    return;
+  }
+
+  RTC_LOG(LS_INFO) << "cmdno[" << msg->cmdno << "] uid[" << msg->uid
+                   << "] stream_name[" << msg->stream_name << "] audio["
+                   << msg->audio << "] video[" << msg->video << "] log_id["
+                   << msg->log_id
+                   << "] rtc worker receive msg, worker_id: " << _worker_id;
+
+  switch (msg->cmdno) {
+    case CMDNO_PUSH:
+      _process_push(msg);
+      break;
+    default:
+      RTC_LOG(LS_WARNING) << "unknown cmdno: " << msg->cmdno
+                          << ", log_id: " << msg->log_id;
+  }
+}
+
 void RtcWorker::_process_notify(int msg) {
   switch (msg) {
     case QUIT:
       _stop();
       break;
     case RTC_MSG:
+      _process_rtc_msg();
       break;
     default:
       RTC_LOG(LS_WARNING) << "unknown msg: " << msg;
@@ -102,5 +129,16 @@ void RtcWorker::join() {
   if (_thread && _thread->joinable()) {
     _thread->join();
   }
+}
+
+void RtcWorker::push_msg(std::shared_ptr<RtcMsg> msg) { _q_msg.produce(msg); }
+bool RtcWorker::pop_msg(std::shared_ptr<RtcMsg> *msg) {
+  return _q_msg.consume(msg);
+}
+
+int RtcWorker::send_rtc_msg(std::shared_ptr<RtcMsg> msg) {
+  // 将消息投递到worker的队列中
+  push_msg(msg);
+  return notify(RTC_MSG);
 }
 }  // namespace xrtc
