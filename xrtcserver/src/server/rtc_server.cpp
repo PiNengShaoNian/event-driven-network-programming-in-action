@@ -22,7 +22,22 @@ void rtc_server_recv_notify(EventLoop * /* el */, IOWatcher * /* w */, int fd,
 
 RtcServer::RtcServer() : _el(new EventLoop(this)) {}
 
-RtcServer::~RtcServer() {}
+RtcServer::~RtcServer() {
+  if (_el) {
+    delete _el;
+    _el = nullptr;
+  }
+
+  if (_thread) {
+    delete _thread;
+  }
+
+  for (auto worker : _workers) {
+    if (worker) {
+      delete worker;
+    }
+  }
+}
 
 int RtcServer::init(const char *conf_file) {
   if (!conf_file) {
@@ -132,6 +147,13 @@ void RtcServer::_stop() {
   _el->stop();
   close(_notify_recv_fd);
   close(_notify_send_fd);
+
+  for (auto worker : _workers) {
+    if (worker) {
+      worker->stop();
+      worker->join();
+    }
+  }
 }
 
 void RtcServer::_process_rtc_msg() {

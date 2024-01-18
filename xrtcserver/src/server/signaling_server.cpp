@@ -114,7 +114,7 @@ int SignalingServer::init(const char *conf_file) {
 }
 
 int SignalingServer::_create_worker(int worker_id) {
-  RTC_LOG(LS_INFO) << "create worker, worker_id: " << worker_id;
+  RTC_LOG(LS_INFO) << "signaling server create worker, worker_id: " << worker_id;
   SignalingWorker *worker = new SignalingWorker(worker_id, _options);
 
   if (worker->init() != 0) {
