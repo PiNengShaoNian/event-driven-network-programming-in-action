@@ -5,6 +5,7 @@
 
 #include "base/socket.h"
 #include "rtc_base/logging.h"
+#include "rtc_base/zmalloc.h"
 #include "rtc_server.h"
 #include "tcp_connection.h"
 #include "xrtcserver_def.h"
@@ -156,7 +157,51 @@ void SignalingWorker::_new_conn(int fd) {
 }
 
 void SignalingWorker::_response_server_offer(std::shared_ptr<RtcMsg> msg) {
-  RTC_LOG(LS_WARNING) << "=============response server offer: " << msg->sdp;
+  TcpConnection *c = (TcpConnection *)msg->conn;
+  if (!c) {
+    return;
+  }
+
+  int fd = msg->fd;
+  if (fd <= 0 || (size_t)fd >= _conns.size()) {
+    return;
+  }
+
+  if (_conns[fd] != c) {
+    return;
+  }
+
+  // 构造响应头
+  xhead_t *xh = (xhead_t *)(c->querybuf);
+  rtc::Slice header(c->querybuf, XHEAD_SIZE);
+  char *buf = (char *)zmalloc(XHEAD_SIZE + MAX_RES_BUF);
+
+  if (!buf) {
+    RTC_LOG(LS_WARNING) << "zmalloc error, log_id: " << xh->log_id;
+    return;
+  }
+
+  memcpy(buf, header.data(), header.size());
+  xhead_t *res_xh = (xhead_t *)buf;
+  Json::Value res_root;
+  res_root["err_no"] = msg->err_no;
+  if (msg->err_no != 0) {
+    res_root["err_msg"] = "process error";
+    res_root["offer"] = "";
+  } else {
+    res_root["err_msg"] = "";
+    res_root["offer"] = msg->sdp;
+  }
+
+  Json::StreamWriterBuilder write_builder;
+  write_builder.settings_["indentation"] = "";
+  std::string json_data = Json::writeString(write_builder, res_root);
+  RTC_LOG(LS_INFO) << "response body: " << json_data;
+
+  res_xh->body_len = json_data.size();
+  snprintf(buf + XHEAD_SIZE, MAX_RES_BUF, "%s", json_data.c_str());
+  rtc::Slice reply(buf, XHEAD_SIZE + res_xh->body_len);
+  // _add_reply(c, reply);
 }
 
 void SignalingWorker::_process_rtc_msg() {
@@ -347,6 +392,7 @@ int SignalingWorker::_process_push(int cmdno, TcpConnection *c,
   msg->log_id = log_id;
   msg->worker = this;
   msg->conn = c;
+  msg->fd = c->fd;
 
   return g_rtc_server->send_rtc_msg(msg);
 }

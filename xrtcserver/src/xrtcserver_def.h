@@ -1,15 +1,17 @@
 #ifndef __XRTCSERVER_DEF_H_
 #define __XRTCSERVER_DEF_H_
 
+#include <stdint.h>
+
+#include <string>
+
 #define CMDNO_PUSH 1
 #define CMDNO_PULL 2
 #define CMDNO_ANSWER 3
 #define CMDNO_STOPUSH 4
 #define CMDNO_STOPPULL 5
 
-#include <stdint.h>
-
-#include <string>
+#define MAX_RES_BUF 4096
 
 namespace xrtc {
 struct RtcMsg {
@@ -21,6 +23,7 @@ struct RtcMsg {
   uint32_t log_id = 0;
   void *worker = nullptr;
   void *conn = nullptr;
+  int fd = 0;
   std::string sdp;
   int err_no = 0;
 };
