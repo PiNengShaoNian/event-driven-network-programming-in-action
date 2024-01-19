@@ -19,7 +19,12 @@ const startPush = () => {
       audio,
     },
     (data, textStatus) => {
-      
+      console.log("push response: " + JSON.stringify(data))
+      if (textStatus === "success" && data.errNo == 0) {
+        $("#tips1").html('<span style="color:blue">推流请求成功!</span>')
+      } else {
+        $("#tips1").html('<span style="color:red">推流请求失败!</span>')
+      }
     },
     "json");
 }

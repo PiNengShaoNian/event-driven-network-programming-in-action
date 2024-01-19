@@ -78,8 +78,14 @@ func Call(serviceName string, request interface{}, response interface{}, logId u
 	req := xrpc.NewRequest(bytes.NewReader(content), logId)
 
 	resp, err := client.Do(req)
+	if err != nil {
+		return err
+	}
 
-	fmt.Print(resp)
+	err = json.Unmarshal(resp.Body, response)
+	if err != nil {
+		return err
+	}
 
-	return err
+	return nil
 }
