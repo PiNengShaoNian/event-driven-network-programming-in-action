@@ -174,4 +174,18 @@ int sock_read_data(int sock, char *buf, size_t len) {
 
   return nread;
 }
+
+int sock_write_data(int sock, const char *buf, size_t len) {
+  int written = write(sock, buf, len);
+  if (written == -1) {
+    if (errno == EAGAIN) {
+      written = 0;
+    } else {
+      RTC_LOG(LS_WARNING) << "sock read failed, error: " << strerror(errno)
+                          << ", errno: " << errno << ", fd: " << sock;
+      return -1;
+    }
+  }
+  return written;
+}
 }  // namespace xrtc

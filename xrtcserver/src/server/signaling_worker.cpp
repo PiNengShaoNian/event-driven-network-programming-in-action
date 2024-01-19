@@ -112,6 +112,50 @@ void conn_io_cb(EventLoop * /* el */, IOWatcher * /* w */, int fd, int events,
   if (events & EventLoop::READ) {
     worker->_read_query(fd);
   }
+
+  if (events & EventLoop::WRITE) {
+    worker->_write_reply(fd);
+  }
+}
+
+void SignalingWorker::_write_reply(int fd) {
+  if (fd <= 0 || (size_t)fd >= _conns.size()) {
+    return;
+  }
+
+  TcpConnection *c = _conns[fd];
+  if (!c) {
+    return;
+  }
+
+  while (c->reply_list.size()) {
+    rtc::Slice reply = c->reply_list.front();
+    int written = sock_write_data(c->fd, reply.data() + c->cur_resp_pos,
+                                  reply.size() - c->cur_resp_pos);
+    if (written == -1) {
+      _close_conn(c);
+      return;
+    } else if (written == 0) {
+      RTC_LOG(LS_WARNING) << "write zero bytes, fd: " << c->fd
+                          << ", worker_id: " << _worker_id;
+    } else if (written + c->cur_resp_pos >= reply.size()) {
+      // 写入完成
+      c->reply_list.pop_front();
+      zfree((void *)reply.data());
+      c->cur_resp_pos = 0;
+      RTC_LOG(LS_INFO) << "write finished, fd: " << c->fd
+                       << ", worker_id: " << _worker_id;
+    } else {
+      c->cur_resp_pos += written;
+    }
+  }
+
+  c->last_interaction = _el->now();
+  if (c->reply_list.empty()) {
+    _el->stop_io_event(c->io_watcher, c->fd, EventLoop::WRITE);
+    RTC_LOG(LS_INFO) << "stop write event, fd: " << c->fd
+                     << ", worker_id: " << _worker_id;
+  }
 }
 
 void conn_time_cb(EventLoop *el, TimerWatcher * /* w */, void *data) {
@@ -201,7 +245,12 @@ void SignalingWorker::_response_server_offer(std::shared_ptr<RtcMsg> msg) {
   res_xh->body_len = json_data.size();
   snprintf(buf + XHEAD_SIZE, MAX_RES_BUF, "%s", json_data.c_str());
   rtc::Slice reply(buf, XHEAD_SIZE + res_xh->body_len);
-  // _add_reply(c, reply);
+  _add_reply(c, reply);
+}
+
+void SignalingWorker::_add_reply(TcpConnection *c, const rtc::Slice &reply) {
+  c->reply_list.push_back(reply);
+  _el->start_io_event(c->io_watcher, c->fd, EventLoop::WRITE);
 }
 
 void SignalingWorker::_process_rtc_msg() {
