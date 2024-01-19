@@ -45,3 +45,33 @@ func (h *Header) Write(w io.Writer) (n int, err error) {
 
 	return w.Write(buf[:])
 }
+
+func (h *Header) UnMarshal(buf []byte) error {
+	if len(buf) < HEADER_SIZE {
+		return errors.New("incomplete header")
+	}
+
+	h.Id = binary.LittleEndian.Uint16(buf[0:2])
+	h.Version = binary.LittleEndian.Uint16(buf[2:4])
+	h.LogId = binary.LittleEndian.Uint32(buf[4:8])
+	copy(h.Provider[:], buf[8:24])
+	h.MagicNum = binary.LittleEndian.Uint32(buf[24:28])
+	h.Reserved = binary.LittleEndian.Uint32(buf[28:32])
+	h.BodyLen = binary.LittleEndian.Uint32(buf[32:36])
+
+	return nil
+}
+
+func (h *Header) Read(r io.Reader) (n int, err error) {
+	var buf [HEADER_SIZE]byte
+
+	if n, err = io.ReadFull(r, buf[:]); err != nil {
+		return 0, err
+	}
+
+	if err = h.UnMarshal(buf[:]); err != nil {
+		return 0, err
+	}
+
+	return n, nil
+}
